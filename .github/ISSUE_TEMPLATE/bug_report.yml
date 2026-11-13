@@ -1,0 +1,68 @@
+name: Bug report
+description: Report a defect in a Hertzline repository
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: repository
+    attributes:
+      label: Repository
+      description: Which repository is affected?
+      options:
+        - app
+        - core
+        - helper
+        - packaging
+        - website
+        - .github
+        - unknown / multiple
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps that reproduce the issue.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, architecture, Hertzline version or commit, and relevant hardware if measurement-related.
+      value: |
+        - OS:
+        - Arch:
+        - Version / commit:
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, exports, or screenshots. Do not invent measurements. Label unavailable sensors as unavailable.
+    validations:
+      required: false

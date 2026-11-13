@@ -1,0 +1,53 @@
+name: Feature request
+description: Propose a change that fits Hertzline principles
+title: "[feat]: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: repository
+    attributes:
+      label: Repository
+      options:
+        - app
+        - core
+        - helper
+        - packaging
+        - website
+        - .github
+        - unknown / multiple
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the change. Every optimization action needs apply, restore, verify, and explanation text.
+    validations:
+      required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints check
+      description: Confirm the request does not violate project rules.
+      options:
+        - label: Does not require injection, memory reading, or game file modification
+          required: true
+        - label: Does not disable Defender, updates, mitigations, or core services
+          required: true
+        - label: Does not claim FPS gains without local measurement
+          required: true
+        - label: Does not require running the whole app elevated
+          required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false

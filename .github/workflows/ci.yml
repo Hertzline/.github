@@ -1,0 +1,42 @@
+# CI for the Hertzline/.github meta repository.
+# Pin actions to commit SHAs (REPOS.md / RULES.md).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-meta:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Required files present
+        run: |
+          set -euo pipefail
+          required=(
+            profile/README.md
+            README.md
+            LICENSE
+            SECURITY.md
+            CONTRIBUTING.md
+            CODE_OF_CONDUCT.md
+            .github/PULL_REQUEST_TEMPLATE.md
+            .github/ISSUE_TEMPLATE/config.yml
+            .github/ISSUE_TEMPLATE/bug_report.yml
+            .github/ISSUE_TEMPLATE/feature_request.yml
+            .github/workflows/ci.yml
+          )
+          for path in "${required[@]}"; do
+            test -f "$path" || { echo "missing: $path"; exit 1; }
+          done
+          grep -q "MIT License" LICENSE
+          grep -q "Contributor Covenant" CODE_OF_CONDUCT.md
+          echo "meta files ok"
