@@ -1,0 +1,71 @@
+name: license-audit
+description: Audit dependency licenses for SPDX-compatible allow-list policy (MIT distribution)
+inputs:
+  working-directory:
+    description: Project root to audit
+    required: false
+    default: .
+  fail-licenses:
+    description: Semicolon-separated license names that fail the npm checker
+    required: false
+    default: GPL;AGPL;SSPL;BUSL;Commons Clause
+  cargo-deny-version:
+    description: Exact cargo-deny version (crates.io / GitHub release)
+    required: false
+    default: "0.20.2"
+  license-checker-version:
+    description: Exact license-checker version (npm)
+    required: false
+    default: "25.0.1"
+runs:
+  using: composite
+  steps:
+    - name: Run license audit
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        FAIL_LICENSES: ${{ inputs.fail-licenses }}
+        CARGO_DENY_VERSION: ${{ inputs.cargo-deny-version }}
+        LICENSE_CHECKER_VERSION: ${{ inputs.license-checker-version }}
+      run: |
+        set -euo pipefail
+        echo "license-audit: working-directory=$(pwd)"
+
+        has_cargo=0
+        has_npm=0
+        [[ -f Cargo.toml ]] && has_cargo=1
+        [[ -f package.json ]] && has_npm=1
+
+        if [[ "$has_cargo" -eq 0 && "$has_npm" -eq 0 ]]; then
+          if [[ -f LICENSE ]] && grep -q "MIT License" LICENSE; then
+            echo "license-audit: no Cargo.toml/package.json; MIT LICENSE present; PASS (no dependency tree)"
+            exit 0
+          fi
+          echo "license-audit: FAIL -- no dependency manifests and no MIT LICENSE"
+          exit 1
+        fi
+
+        if [[ "$has_npm" -eq 1 ]]; then
+          if [[ ! -f package-lock.json && ! -f npm-shrinkwrap.json && ! -f yarn.lock && ! -f pnpm-lock.yaml ]]; then
+            echo "license-audit: FAIL -- package.json present without a lockfile"
+            exit 1
+          fi
+          echo "license-audit: npm license-checker@${LICENSE_CHECKER_VERSION}"
+          npx --yes "license-checker@${LICENSE_CHECKER_VERSION}" --production --failOn "${FAIL_LICENSES}"
+        fi
+
+        if [[ "$has_cargo" -eq 1 ]]; then
+          if [[ ! -f deny.toml && ! -f .cargo/deny.toml ]]; then
+            echo "license-audit: FAIL -- Cargo.toml present without deny.toml (add deny.toml with license allow-list)"
+            exit 1
+          fi
+          if ! command -v cargo >/dev/null 2>&1; then
+            echo "license-audit: FAIL -- cargo required to run cargo-deny"
+            exit 1
+          fi
+          echo "license-audit: cargo-deny ${CARGO_DENY_VERSION}"
+          cargo install cargo-deny --version "${CARGO_DENY_VERSION}" --locked --quiet
+          cargo deny check licenses
+        fi
+
+        echo "license-audit: PASS"

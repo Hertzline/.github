@@ -1,0 +1,48 @@
+name: pin-actions
+description: Fail if workflow uses unpinned third-party GitHub Actions (require full commit SHA)
+inputs:
+  workflows-path:
+    description: Directory of workflow YAML files to scan
+    required: false
+    default: .github/workflows
+runs:
+  using: composite
+  steps:
+    - name: Require commit SHA pins
+      shell: bash
+      env:
+        WORKFLOWS_PATH: ${{ inputs.workflows-path }}
+      run: |
+        set -euo pipefail
+        root="${WORKFLOWS_PATH}"
+        if [[ ! -d "$root" ]]; then
+          echo "missing workflows directory: $root"
+          exit 1
+        fi
+        mapfile -t lines < <(grep -RInE --include='*.yml' --include='*.yaml' \
+          '^[[:space:]]*uses:[[:space:]]+' "$root" || true)
+        fail=0
+        checked=0
+        for line in "${lines[@]}"; do
+          content="${line#*:}"
+          content="${content#*:}"
+          trimmed="$(echo "$content" | sed 's/^[[:space:]]*//')"
+          if [[ "$trimmed" == \#* ]]; then
+            continue
+          fi
+          value="$(echo "$trimmed" | sed -E 's/^uses:[[:space:]]*//' | sed -E 's/[[:space:]]+#.*//' | tr -d "\"'")"
+          if [[ "$value" == ./* || "$value" == \$/* ]]; then
+            continue
+          fi
+          checked=$((checked + 1))
+          ref="${value##*@}"
+          if [[ ! "$ref" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "unpinned action (need 40-char commit SHA): $line"
+            fail=1
+          fi
+        done
+        if [[ "$fail" -ne 0 ]]; then
+          echo "pin-actions: FAIL"
+          exit 1
+        fi
+        echo "pin-actions: PASS (${checked} third-party uses lines)"

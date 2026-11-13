@@ -29,6 +29,7 @@ Do not introduce a dependency from `core` to `app`, or from `helper` to UI code.
 - Prefer documented OS APIs. Do not add injection, memory reading, or game file modification.
 - Do not claim "+X FPS" without a local measured result.
 - Pin GitHub Actions to commit SHAs. Keep workflow permissions minimal.
+- Prefer shared workflows documented in [WORKFLOWS.md](WORKFLOWS.md). Do not pass repository secrets to fork pull requests.
 - Never commit secrets, `CLAUDE.md`, or `AGENTS.md`.
 
 ## Pull requests

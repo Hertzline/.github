@@ -1,0 +1,52 @@
+# Reusable license-audit workflow for Hertzline consumer repositories.
+# Call with a commit SHA pin:
+#   uses: Hertzline/.github/.github/workflows/reusable-license-audit.yml@<sha>
+name: reusable-license-audit
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: Runner label
+        type: string
+        required: false
+        default: ubuntu-latest
+      meta-ref:
+        description: Git ref of Hertzline/.github that provides the license-audit composite
+        type: string
+        required: false
+        default: main
+      working-directory:
+        description: Subdirectory inside the caller repository to audit
+        type: string
+        required: false
+        default: .
+
+permissions:
+  contents: read
+
+jobs:
+  license-audit:
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: consumer
+
+      - name: Checkout Hertzline/.github composites
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Hertzline/.github
+          ref: ${{ inputs.meta-ref }}
+          path: hertzline-meta
+
+      - name: Fork secret guard
+        uses: ./hertzline-meta/actions/fork-guard
+        with:
+          has-secrets: "false"
+
+      - name: License audit
+        uses: ./hertzline-meta/actions/license-audit
+        with:
+          working-directory: consumer/${{ inputs.working-directory }}

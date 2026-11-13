@@ -28,15 +28,42 @@ jobs:
             SECURITY.md
             CONTRIBUTING.md
             CODE_OF_CONDUCT.md
+            WORKFLOWS.md
             .github/PULL_REQUEST_TEMPLATE.md
             .github/ISSUE_TEMPLATE/config.yml
             .github/ISSUE_TEMPLATE/bug_report.yml
             .github/ISSUE_TEMPLATE/feature_request.yml
             .github/workflows/ci.yml
+            .github/workflows/reusable-ci.yml
+            .github/workflows/reusable-license-audit.yml
+            actions/pin-actions/action.yml
+            actions/fork-guard/action.yml
+            actions/license-audit/action.yml
           )
           for path in "${required[@]}"; do
             test -f "$path" || { echo "missing: $path"; exit 1; }
           done
           grep -q "MIT License" LICENSE
           grep -q "Contributor Covenant" CODE_OF_CONDUCT.md
+          grep -q "workflow_call" .github/workflows/reusable-ci.yml
+          grep -q "workflow_call" .github/workflows/reusable-license-audit.yml
+          grep -q "using: composite" actions/license-audit/action.yml
+          grep -q "permissions:" .github/workflows/reusable-ci.yml
+          grep -q "contents: read" .github/workflows/reusable-ci.yml
+          grep -q "fork-guard" .github/workflows/reusable-ci.yml
           echo "meta files ok"
+
+      - name: Fork secret guard
+        uses: ./actions/fork-guard
+        with:
+          has-secrets: "false"
+
+      - name: Pin actions
+        uses: ./actions/pin-actions
+        with:
+          workflows-path: .github/workflows
+
+      - name: License audit
+        uses: ./actions/license-audit
+        with:
+          working-directory: .

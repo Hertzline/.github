@@ -1,0 +1,71 @@
+# Reusable CI skeleton for Hertzline consumer repositories.
+# Call with a commit SHA pin, for example:
+#   uses: Hertzline/.github/.github/workflows/reusable-ci.yml@<sha>
+# Do not pass repository/org secrets to fork pull requests.
+name: reusable-ci
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: Runner label
+        type: string
+        required: false
+        default: ubuntu-latest
+      meta-ref:
+        description: Git ref of Hertzline/.github that provides composite actions
+        type: string
+        required: false
+        default: main
+      pin-check:
+        description: Run action SHA pin check on caller workflows
+        type: boolean
+        required: false
+        default: true
+      license-audit:
+        description: Run license-audit composite on the caller checkout
+        type: boolean
+        required: false
+        default: true
+      has-secrets:
+        description: Whether the caller intends to use secrets beyond GITHUB_TOKEN in this path
+        type: boolean
+        required: false
+        default: false
+
+# Least privilege for the reusable skeleton. Callers may narrow further; they must not widen via nest.
+permissions:
+  contents: read
+
+jobs:
+  guard-and-audit:
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: consumer
+
+      - name: Checkout Hertzline/.github composites
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Hertzline/.github
+          ref: ${{ inputs.meta-ref }}
+          path: hertzline-meta
+
+      - name: Fork secret guard
+        uses: ./hertzline-meta/actions/fork-guard
+        with:
+          has-secrets: ${{ inputs.has-secrets }}
+
+      - name: Pin actions
+        if: inputs.pin-check
+        uses: ./hertzline-meta/actions/pin-actions
+        with:
+          workflows-path: consumer/.github/workflows
+
+      - name: License audit
+        if: inputs.license-audit
+        uses: ./hertzline-meta/actions/license-audit
+        with:
+          working-directory: consumer
