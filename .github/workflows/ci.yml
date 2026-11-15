@@ -29,6 +29,7 @@ jobs:
             CONTRIBUTING.md
             CODE_OF_CONDUCT.md
             WORKFLOWS.md
+            scripts/check_hz056.py
             .github/PULL_REQUEST_TEMPLATE.md
             .github/ISSUE_TEMPLATE/config.yml
             .github/ISSUE_TEMPLATE/bug_report.yml
@@ -51,7 +52,11 @@ jobs:
           grep -q "permissions:" .github/workflows/reusable-ci.yml
           grep -q "contents: read" .github/workflows/reusable-ci.yml
           grep -q "fork-guard" .github/workflows/reusable-ci.yml
+          grep -q "HZ-056" WORKFLOWS.md
           echo "meta files ok"
+
+      - name: HZ-056 hardening gate
+        run: python scripts/check_hz056.py
 
       - name: Fork secret guard
         uses: ./actions/fork-guard
